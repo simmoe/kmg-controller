@@ -39,7 +39,7 @@ function setup(){
 
 }
 
-window.location.href = 'https://dinhjemmeside.dk?forceReload=' + new Date().getTime()
+window.location.href = 'https://simmoe.github.io/kmg-controller/?forceReload=' + new Date().getTime()
 
 
 function draw(){
