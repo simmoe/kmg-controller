@@ -5,6 +5,12 @@ let client
 let ddu_sign_button, ddu_sign_active
 
 function setup(){    
+
+    //force reload 
+    select('#reload').mousePressed(()=>{
+        window.location.href = 'https://simmoe.github.io/kmg-controller/?forceReload=' + new Date().getTime()
+    })
+
     pages = selectAll('.page')
     let ddu_sign_button = select('#ddu_sign')
     .mousePressed(()=>{
@@ -39,7 +45,7 @@ function setup(){
 
 }
 
-window.location.href = 'https://simmoe.github.io/kmg-controller/?forceReload=' + new Date().getTime()
+
 
 
 function draw(){
