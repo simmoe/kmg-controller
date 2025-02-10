@@ -39,6 +39,9 @@ function setup(){
 
 }
 
+window.location.href = 'https://dinhjemmeside.dk?forceReload=' + new Date().getTime()
+
+
 function draw(){
 }
 
