@@ -14,6 +14,7 @@ function setup(){
     pages = selectAll('.page')
     let ddu_sign_button = select('#ddu_sign')
     .mousePressed(()=>{
+        console.log('SIGN PRESSED')
         client.publish('DDU_INFINITY')
     })
 
