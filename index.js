@@ -15,7 +15,7 @@ function setup(){
     let ddu_sign_button = select('#ddu_sign')
     .mousePressed(()=>{
         console.log('SIGN PRESSED')
-        client.publish('DDU_INFINITY')
+        client.publish('DDU_INFINITY', ddu_sign_active ? 'off' : 'on')
     })
 
     client = mqtt.connect('wss://mqtt.nextservices.dk')
