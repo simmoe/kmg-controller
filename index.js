@@ -84,5 +84,9 @@ function updateHueButton(lightNumber, isActive, brightness) {
     let button = select(`.control_button[data-lightnumber="${lightNumber}"]`)
     if (!button) return
 
-    button.toggleClass('active', isActive)
+    if(isActive){
+        button.addClass('active')
+    }else{
+        button.removeClass('active')
+    }
 }
