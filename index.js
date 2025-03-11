@@ -41,7 +41,11 @@ function setup() {
     
         if (topic === 'DDU_CONTROLLER' && ms.control === 'DDU_INFINITY') {
             ddu_sign_active = ms.status
-            ddu_sign_button.toggleClass('active', ddu_sign_active)
+            if(ddu_sign_active){
+                ddu_sign_button.addClass('active')
+            }else{
+                ddu_sign_button.removeClass('active')
+            }
         }
     
         if (topic === 'HUE_CONTROLLER/status') {
