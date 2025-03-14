@@ -15,26 +15,28 @@ function setup() {
     
     // DDU Sign knap
     ddu_sign_button = select('#ddu_sign')
-    .mousePressed(() => {
-        console.log('SIGN PRESSED');
-        client.publish('DDU_INFINITY', ddu_sign_active ? 'off' : 'on');
-    });
-    
+      .mousePressed(() => {
+          console.log('SIGN PRESSED');
+          client.publish('DDU_INFINITY', ddu_sign_active ? 'off' : 'on');
+      });
+
     // Night mode override knap
     night_mode_override_active = false;
     night_mode_override_button = select('#night_mode_override')
-    .mousePressed(() => {
-        night_mode_override_active = !night_mode_override_active;
-        console.log('Night mode override toggled:', night_mode_override_active);
-        // Send MQTT-besked: hvis override aktiveres, send "off" (dvs. deaktiver nattilstand)
-        // Hvis override deaktiveres, send "on" (nattilstand aktiveres)
-        client.publish('NIGHT_MODE_OVERRIDE', night_mode_override_active ? 'off' : 'on');
-        if(night_mode_override_active){
-            night_mode_override_button.addClass('active');
-        } else {
-            night_mode_override_button.removeClass('active');
-        }
-    });
+      .mousePressed(() => {
+          // Toggle override-status
+          night_mode_override_active = !night_mode_override_active;
+          console.log('Night mode override toggled:', night_mode_override_active);
+          // Hvis override aktiveres, sendes "off" (dvs. nattilstand deaktiveres midlertidigt)
+          // Hvis override deaktiveres, sendes "on" for at genoptage nattilstanden
+          client.publish('NIGHT_MODE_OVERRIDE', night_mode_override_active ? 'off' : 'on');
+          // Opdater knapens visuelle status
+          if(night_mode_override_active){
+              night_mode_override_button.addClass('active');
+          } else {
+              night_mode_override_button.removeClass('active');
+          }
+      });
 
     client = mqtt.connect('wss://mqtt.nextservices.dk');
 
@@ -42,30 +44,45 @@ function setup() {
         console.log('MQTT connected');
         client.publish('DDU_CONTROLLER_CALL', 'DDU_INFINITY');
 
-        // Abonner på Hue-statusopdateringer
+        // Abonner på relevante topics
+        client.subscribe('DDU_CONTROLLER');
+        client.subscribe('DDU_INFINITY');
         client.subscribe('HUE_CONTROLLER/status');
 
-        // Bed M5-controlleren om at sende aktuel status ved opstart
         console.log('Sending status request on: HUE_CONTROLLER_STATUS_REQUEST...');
         client.publish('HUE_CONTROLLER_STATUS_REQUEST', '{}');
     });
 
-    client.subscribe('DDU_CONTROLLER');
-
     client.on('message', (topic, message) => {
-        let ms = JSON.parse(message.toString());
-        console.log(`Received on ${topic}:`, ms);
-    
-        if (topic === 'DDU_CONTROLLER' && ms.control === 'DDU_INFINITY') {
-            ddu_sign_active = ms.status;
-            if(ddu_sign_active){
-                ddu_sign_button.addClass('active');
-            } else {
-                ddu_sign_button.removeClass('active');
+        let msg = message.toString();
+        console.log(`Received on ${topic}:`, msg);
+
+        if (topic === 'DDU_INFINITY') {
+            // Hvis beskeden er "off", betyder det at nattilstand er aktiv (override ikke sat)
+            // Hvis beskeden er "on", er det dag, eller override er aktiv
+            if (msg === 'off') {
+                night_mode_override_active = true;
+                night_mode_override_button.addClass('active');
+            } else if (msg === 'on') {
+                night_mode_override_active = false;
+                night_mode_override_button.removeClass('active');
             }
         }
-    
+
+        if (topic === 'DDU_CONTROLLER') {
+            let ms = JSON.parse(msg);
+            if (ms.control === 'DDU_INFINITY') {
+                ddu_sign_active = ms.status;
+                if(ddu_sign_active){
+                    ddu_sign_button.addClass('active');
+                } else {
+                    ddu_sign_button.removeClass('active');
+                }
+            }
+        }
+
         if (topic === 'HUE_CONTROLLER/status') {
+            let ms = JSON.parse(msg);
             Object.entries(ms).forEach(([lightNumber, lightData]) => {
                 let button = select(`.control_button[data-lightnumber="${lightNumber}"]`);
                 if (button) {
@@ -74,11 +91,10 @@ function setup() {
             });
         }
     });
-    
+
     // Find alle Hue-knapper og tilføj event listeners
     selectAll('.control_button[data-lightnumber]').forEach(button => {
         let lightNumber = button.attribute('data-lightnumber');
-        // Tilføj tryk-event til knappen
         button.mousePressed(() => {
             console.log(`HUE BUTTON PRESSED for light ${lightNumber}`);
             toggleHueLight(lightNumber);
